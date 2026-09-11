@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<title>Caderno da Lavoura</title>
+<meta name="theme-color" content="#1F6E4F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Caderno">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --terra:#8A5A3B;
+    --terra-2:#A9704B;
+    --folha:#1F6E4F;
+    --folha-2:#159463;
+    --musgo:#4CA36B;
+    --tomate:#E0522F;
+    --ouro:#E0A62B;
+    --papel:#F5F6F3;
+    --papel-2:#EBEEE8;
+    --linha:#E1E4DD;
+    --tinta:#1C2420;
+    --tinta-suave:#70796F;
+    --branco:#FFFFFF;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--papel);
+    color:var(--tinta);
+    overscroll-behavior-y:contain;
+  }
+  #app{max-width:640px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--papel);}
+
+  /* ---- Top bar ---- */
+  .topbar{
+    background:linear-gradient(135deg, var(--folha), var(--folha-2));
+    color:var(--branco);
+    padding:calc(env(safe-area-inset-top) + 18px) 20px 18px;
+    display:flex;align-items:center;gap:12px;
+    position:sticky;top:0;z-index:10;
+  }
+  .topbar h1{
+    font-size:19px;margin:0;font-weight:700;letter-spacing:-.2px;
+  }
+  .topbar .sub{font-size:12px;color:rgba(255,255,255,.75);margin-top:2px;font-weight:500;}
+  .back-btn{
+    background:rgba(255,255,255,.16);border:none;color:var(--branco);
+    width:36px;height:36px;border-radius:12px;font-size:18px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .topbar-texts{flex:1;min-width:0;}
+  .topbar-texts h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .icon-btn{
+    background:rgba(255,255,255,.16);border:none;color:var(--branco);
+    width:36px;height:36px;border-radius:12px;font-size:16px;flex-shrink:0;
+  }
+
+  main{flex:1;padding:16px 16px 100px;}
+
+  /* ---- Cards de lavoura (home) ---- */
+  .lavoura-card{
+    background:var(--branco);
+    border:1px solid var(--linha);
+    border-radius:16px;
+    padding:16px 18px;
+    margin-bottom:10px;
+    display:flex;justify-content:space-between;align-items:center;
+    box-shadow:0 1px 2px rgba(20,30,25,.04);
+  }
+  .lavoura-card .nome{font-size:16px;font-weight:700;letter-spacing:-.1px;}
+  .lavoura-card .periodo{font-size:12px;color:var(--tinta-suave);margin-top:2px;}
+  .lavoura-card .saldo{font-size:16px;font-weight:700;color:var(--folha-2);text-align:right;}
+  .lavoura-card .saldo.neg{color:var(--tomate);}
+  .lavoura-card .saldo-label{font-size:10px;color:var(--tinta-suave);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+
+  .add-lavoura-btn{
+    width:100%;padding:15px;border-radius:16px;border:1.5px dashed var(--linha);
+    background:transparent;color:var(--folha-2);font-weight:700;font-size:14px;margin-top:4px;
+  }
+
+  /* ---- Resumo (cards) ---- */
+  .resumo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+  .resumo-card{background:var(--branco);border:1px solid var(--linha);border-radius:14px;padding:13px 14px;}
+  .resumo-card .label{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--tinta-suave);font-weight:700;}
+  .resumo-card .valor{font-size:19px;font-weight:700;margin-top:4px;letter-spacing:-.2px;}
+  .resumo-card.saldo{grid-column:1 / -1;background:linear-gradient(135deg, var(--folha), var(--folha-2));border:none;}
+  .resumo-card.saldo .label{color:rgba(255,255,255,.75);}
+  .resumo-card.saldo .valor{color:var(--branco);font-size:26px;}
+  .v-pago{color:var(--folha-2);}
+  .v-aberto{color:var(--tomate);}
+
+  /* ---- Tabs ---- */
+  .tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--papel-2);padding:4px;border-radius:12px;}
+  .tab{flex:1;text-align:center;padding:9px 4px;border-radius:9px;font-size:13px;font-weight:600;color:var(--tinta-suave);}
+  .tab.active{background:var(--branco);color:var(--folha);box-shadow:0 1px 3px rgba(20,30,25,.08);}
+
+  /* ---- Filtro ---- */
+  .filtro-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+  .filtro-row input[type=date]{flex:1;font-size:13px;}
+  .filtro-row select{flex:1;font-size:13px;}
+  .filtro-clear{font-size:12px;color:var(--folha-2);font-weight:700;background:none;border:none;padding:4px;}
+
+  /* ---- Lista de vendas/despesas ---- */
+  .entry{
+    background:var(--branco);border:1px solid var(--linha);border-radius:14px;
+    padding:13px 14px;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;align-items:center;
+  }
+  .entry .info{min-width:0;}
+  .entry .linha1{font-size:14px;font-weight:700;}
+  .entry .linha2{font-size:12px;color:var(--tinta-suave);margin-top:2px;}
+  .entry .valores{text-align:right;flex-shrink:0;}
+  .entry .total{font-size:15px;font-weight:700;}
+  .status-pill{
+    font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
+    padding:2px 8px;border-radius:20px;display:inline-block;margin-top:3px;
+  }
+  .status-pago{background:#DCF3E6;color:var(--folha-2);}
+  .status-nao{background:#FBE1D8;color:var(--tomate);}
+  .empty-msg{text-align:center;color:var(--tinta-suave);padding:40px 20px;font-size:14px;}
+
+  /* ---- Botão flutuante ---- */
+  .fab{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 18px);
+    max-width:640px;width:calc(100% - 32px);
+    display:flex;gap:10px;z-index:20;
+  }
+  .fab button{
+    flex:1;padding:15px;border-radius:16px;border:none;font-weight:700;font-size:14px;
+    box-shadow:0 6px 16px rgba(20,60,40,.16);
+  }
+  .fab .primary{background:var(--folha);color:var(--branco);}
+  .fab .secondary{background:var(--branco);color:var(--folha-2);border:1px solid var(--linha);box-shadow:none;}
+
+  /* ---- Modal / form ---- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(15,20,17,.45);z-index:50;
+    display:flex;align-items:flex-end;
+  }
+  .sheet{
+    background:var(--branco);width:100%;max-width:640px;margin:0 auto;
+    border-radius:22px 22px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom) + 20px);
+    max-height:88vh;overflow-y:auto;
+  }
+  .sheet h2{margin:0 0 16px;font-size:18px;font-weight:700;letter-spacing:-.2px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--tinta-suave);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px;}
+  .field input, .field select{
+    width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--linha);
+    font-size:15px;background:var(--papel);color:var(--tinta);
+  }
+  .row2{display:flex;gap:10px;}
+  .row2 .field{flex:1;}
+  .sheet-actions{display:flex;gap:10px;margin-top:16px;}
+  .sheet-actions button{flex:1;padding:14px;border-radius:14px;border:none;font-weight:700;font-size:14px;}
+  .btn-salvar{background:var(--folha);color:var(--branco);}
+  .btn-cancelar{background:var(--papel-2);color:var(--tinta-suave);}
+  .btn-excluir{background:none;color:var(--tomate);font-weight:700;font-size:13px;border:none;margin-top:10px;width:100%;padding:8px;}
+
+  .menu-item{
+    display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--papel-2);font-size:15px;font-weight:600;
+  }
+  .menu-item:last-child{border-bottom:none;}
+  .toast{
+    position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+    background:var(--tinta);color:var(--branco);padding:10px 18px;border-radius:20px;
+    font-size:13px;font-weight:600;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+  input[type=file]{display:none;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= DADOS ================= */
+const DADOS_INICIAIS = [{"id": "uag5bryi", "nome": "Tomate Bruno", "periodo": "Março", "vendas": [{"id": "uaidlcqv", "data": "2026-05-15", "quantidade": "2", "valor": "110", "status": "Pago", "comprador": "Marquinho", "observacao": "Graúdo"}, {"id": "tuq76caa", "data": "2026-05-15", "quantidade": "1", "valor": "50", "status": "Pago", "comprador": "Marquinho", "observacao": "Médio"}, {"id": "02pafpsb", "data": "2026-05-18", "quantidade": "14", "valor": "110", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graudo"}, {"id": "v00tf6gu", "data": "2026-05-18", "quantidade": "2", "valor": "50", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "jrkuzx6q", "data": "2026-05-23", "quantidade": "15", "valor": "110", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graudo"}, {"id": "smecs7tf", "data": "2026-05-23", "quantidade": "1", "valor": "50", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "8r3oslly", "data": "2026-05-26", "quantidade": "22", "valor": "110", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graudo"}, {"id": "6z1gi53g", "data": "2026-05-26", "quantidade": "2", "valor": "50", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "r3y7c1hu", "data": "2026-05-29", "quantidade": "21", "valor": "110", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graudo"}, {"id": "eyr3u85f", "data": "2026-05-29", "quantidade": "1", "valor": "50", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "sw1e9z35", "data": "2026-06-02", "quantidade": "19", "valor": "110", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graudo"}, {"id": "ppsytc36", "data": "2026-06-02", "quantidade": "1", "valor": "50", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "3ee7snvh", "data": "2026-06-05", "quantidade": "13", "valor": "110", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "vg2owe27", "data": "2026-06-05", "quantidade": "1", "valor": "50", "status": "Pago", "comprador": "Marquinho", "observacao": "Médio"}, {"id": "bflup37t", "data": "2026-06-09", "quantidade": "10", "valor": "110", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graudo"}, {"id": "52xvuq79", "data": "2026-06-09", "quantidade": "1", "valor": "50", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "fxgwdjyz", "data": "2026-06-13", "quantidade": "57.5", "valor": "100", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "3n0x38kb", "data": "2026-06-13", "quantidade": "3.5", "valor": "50", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "230j5qla", "data": "2026-06-15", "quantidade": "40", "valor": "80", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "5p9yv71i", "data": "2026-06-15", "quantidade": "2", "valor": "40", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "k0a196qe", "data": "2026-06-19", "quantidade": "42", "valor": "57", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "qtk9mpby", "data": "2026-06-19", "quantidade": "5", "valor": "30", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "jjw0k9wz", "data": "2026-06-22", "quantidade": "25", "valor": "53", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "d8gpoq9g", "data": "2026-06-22", "quantidade": "2", "valor": "25", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "ktdnl7mb", "data": "2026-06-26", "quantidade": "44", "valor": "53", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "0vv4mmph", "data": "2026-06-26", "quantidade": "4", "valor": "25", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "jk7ay4oe", "data": "2026-06-26", "quantidade": "5", "valor": "0.01", "status": "Pago", "comprador": "Marquinhos", "observacao": "Manchado"}, {"id": "6cb37cnv", "data": "2026-06-29", "quantidade": "44", "valor": "53", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "yxiy03kb", "data": "2026-06-29", "quantidade": "4", "valor": "25", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "7xys2x9l", "data": "2026-06-29", "quantidade": "3", "valor": "0.01", "status": "Pago", "comprador": "Marquinhos", "observacao": "Manchado"}, {"id": "w8k9v11r", "data": "2026-07-03", "quantidade": "34", "valor": "55", "status": "Não pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "fpueq4sb", "data": "2026-07-03", "quantidade": "7", "valor": "30", "status": "Não pago", "comprador": "Marquinhos", "observacao": "Médio"}], "despesas": [{"id": "1p6s8mxc", "data": "2026-06-13", "descricao": "Despesas total", "valor": "13000"}]}, {"id": "h5raqjaa", "nome": "Tomate 🍅", "periodo": "Março 2026", "vendas": [{"id": "ae9a9x2z", "data": "2026-05-15", "quantidade": "6", "valor": "110", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graudo"}, {"id": "mx58xgcn", "data": "2026-05-15", "quantidade": "1", "valor": "55", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "feuyl6s8", "data": "2026-05-18", "quantidade": "3", "valor": "110", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graudo"}, {"id": "fu9ing1z", "data": "2026-05-22", "quantidade": "29", "valor": "110", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graudo"}, {"id": "03vh9n4g", "data": "2026-05-22", "quantidade": "1", "valor": "50", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "j8lwa6sg", "data": "2026-05-20", "quantidade": "19", "valor": "110", "status": "Pago", "comprador": "Denis", "observacao": "Graudo"}, {"id": "j0ed03xj", "data": "2026-05-20", "quantidade": "2", "valor": "50", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "lbn4yr75", "data": "2026-05-27", "quantidade": "24", "valor": "120", "status": "Pago", "comprador": "Denis", "observacao": "Graudo"}, {"id": "bt73vt8l", "data": "2026-05-27", "quantidade": "5", "valor": "70", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "bciw9n4l", "data": "2026-06-01", "quantidade": "39", "valor": "110", "status": "Pago", "comprador": "Denis", "observacao": "Graudo"}, {"id": "5btjkxdb", "data": "2026-06-01", "quantidade": "2", "valor": "65", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "7inoawe8", "data": "2026-06-03", "quantidade": "32", "valor": "110", "status": "Pago", "comprador": "Denis", "observacao": "Graudo"}, {"id": "fzsjo8cq", "data": "2026-06-03", "quantidade": "8", "valor": "60", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "l91l7jhe", "data": "2026-06-03", "quantidade": "1", "valor": "20", "status": "Pago", "comprador": "Denis", "observacao": "Diverso"}, {"id": "x54gzc1o", "data": "2026-06-08", "quantidade": "26", "valor": "100", "status": "Pago", "comprador": "Denis", "observacao": "Graúdo"}, {"id": "o3e9032k", "data": "2026-06-08", "quantidade": "9", "valor": "50", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "i9nhnor7", "data": "2026-06-08", "quantidade": "2", "valor": "20", "status": "Pago", "comprador": "Denis", "observacao": "Diverso"}, {"id": "t4cymh2o", "data": "2026-06-10", "quantidade": "26", "valor": "100", "status": "Pago", "comprador": "Denis", "observacao": "Graúdo"}, {"id": "cp9654mk", "data": "2026-06-10", "quantidade": "8", "valor": "50", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "8k8w34x5", "data": "2026-06-10", "quantidade": "1", "valor": "20", "status": "Pago", "comprador": "Denis", "observacao": "Diverso"}, {"id": "hiig0898", "data": "2026-06-13", "quantidade": "21.5", "valor": "100", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "j359r3l3", "data": "2026-06-13", "quantidade": "1.5", "valor": "50", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "3o7kfvc0", "data": "2026-06-16", "quantidade": "26", "valor": "80", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "jnsf8twc", "data": "2026-06-16", "quantidade": "1.5", "valor": "40", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "w7hdojgu", "data": "2026-06-19", "quantidade": "36", "valor": "57", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "6uy2qdlq", "data": "2026-06-19", "quantidade": "2", "valor": "30", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "thr7awp8", "data": "2026-06-22", "quantidade": "14", "valor": "53", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graúdo"}, {"id": "x5x2y17p", "data": "2026-06-22", "quantidade": "1", "valor": "25", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "vkklekdh", "data": "2026-06-12", "quantidade": "45", "valor": "100", "status": "Pago", "comprador": "Denis", "observacao": "Graudo"}, {"id": "xainwxj0", "data": "2026-06-12", "quantidade": "5", "valor": "60", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "0x3ls1eo", "data": "2026-06-12", "quantidade": "1", "valor": "20", "status": "Pago", "comprador": "Denis", "observacao": "Diverso"}, {"id": "btnsd843", "data": "2026-06-16", "quantidade": "43", "valor": "100", "status": "Pago", "comprador": "Denis", "observacao": "Graúdo"}, {"id": "ecjdt26w", "data": "2026-06-16", "quantidade": "5", "valor": "50", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "j51cuprz", "data": "2026-06-16", "quantidade": "2", "valor": "20", "status": "Pago", "comprador": "Denis", "observacao": "Diverso"}, {"id": "0sfhwhov", "data": "2026-06-19", "quantidade": "38", "valor": "65", "status": "Pago", "comprador": "Denis", "observacao": "Graudo"}, {"id": "wrk8dcw4", "data": "2026-06-19", "quantidade": "7", "valor": "40", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "0mp75nbu", "data": "2026-06-19", "quantidade": "3", "valor": "15", "status": "Pago", "comprador": "Denis", "observacao": "Diversos"}, {"id": "xzxtficw", "data": "2026-06-19", "quantidade": "1", "valor": "15", "status": "Pago", "comprador": "Denis", "observacao": "Pirulito"}, {"id": "qf12k4b1", "data": "2026-06-23", "quantidade": "39", "valor": "65", "status": "Pago", "comprador": "Denis", "observacao": "Graudo"}, {"id": "xo9iff21", "data": "2026-06-23", "quantidade": "7", "valor": "40", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "e4sw9njf", "data": "2026-06-23", "quantidade": "3", "valor": "15", "status": "Pago", "comprador": "Denis", "observacao": "Diversos"}, {"id": "x0ils8io", "data": "2026-06-23", "quantidade": "1", "valor": "15", "status": "Pago", "comprador": "Denis", "observacao": "Pirulito"}, {"id": "en4p5cot", "data": "2026-06-26", "quantidade": "26", "valor": "75", "status": "Pago", "comprador": "Leônidas", "observacao": "Graúdo"}, {"id": "z1czeo9u", "data": "2026-06-26", "quantidade": "4", "valor": "0.0001", "status": "Pago", "comprador": "Leônidas", "observacao": "Manchado"}, {"id": "1tvqm05q", "data": "2026-06-30", "quantidade": "32", "valor": "53", "status": "Pago", "comprador": "Marquinhos", "observacao": "Graudo"}, {"id": "axbqge65", "data": "2026-06-30", "quantidade": "2.5", "valor": "25", "status": "Pago", "comprador": "Marquinhos", "observacao": "Médio"}, {"id": "dy70p6ou", "data": "2026-06-29", "quantidade": "41", "valor": "60", "status": "Pago", "comprador": "Denis", "observacao": "Graúdo"}, {"id": "9ufscu3x", "data": "2026-06-29", "quantidade": "5", "valor": "35", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "ha7drhh6", "data": "2026-06-29", "quantidade": "4", "valor": "10", "status": "Pago", "comprador": "Denis", "observacao": "Diverso"}, {"id": "68s7dl6f", "data": "2026-07-01", "quantidade": "38", "valor": "50", "status": "Pago", "comprador": "Denis", "observacao": "Graúdo"}, {"id": "nnqne85g", "data": "2026-07-01", "quantidade": "7", "valor": "30", "status": "Pago", "comprador": "Denis", "observacao": "Médio"}, {"id": "enplu4be", "data": "2026-07-01", "quantidade": "4", "valor": "10", "status": "Pago", "comprador": "Denis", "observacao": "Diverso"}, {"id": "b9hqy064", "data": "2026-06-29", "quantidade": "26", "valor": "65", "status": "Pago", "comprador": "Leonidas", "observacao": ""}], "despesas": [{"id": "p3l0xvzz", "data": "2026-06-14", "descricao": "Despesas total", "valor": "20000"}]}, {"id": "lbt8rz8n", "nome": "Abobrinha 🙏", "periodo": "Junho 2026", "vendas": [{"id": "5sl2p5x0", "data": "2026-07-31", "quantidade": "6", "valor": "40", "status": "Pago", "comprador": "João Paulo", "observacao": ""}, {"id": "o1b5zpxd", "data": "2026-08-03", "quantidade": "27", "valor": "40", "status": "Pago", "comprador": "João Paulo", "observacao": ""}, {"id": "2j8wnhoe", "data": "2026-08-07", "quantidade": "40", "valor": "0.1", "status": "Não pago", "comprador": "Márcio", "observacao": ""}, {"id": "iobiuiws", "data": "2026-08-07", "quantidade": "16", "valor": "0.1", "status": "Não pago", "comprador": "Tião", "observacao": ""}, {"id": "bzjisnoj", "data": "2026-08-10", "quantidade": "36", "valor": "0.1", "status": "Não pago", "comprador": "Márcio", "observacao": ""}, {"id": "0lji0ea7", "data": "2026-08-11", "quantidade": "19", "valor": "35", "status": "Não pago", "comprador": "João Paulo", "observacao": ""}, {"id": "81id6xfa", "data": "2026-08-13", "quantidade": "9", "valor": "24", "status": "Pago", "comprador": "Kate", "observacao": ""}, {"id": "lk5r8ojf", "data": "2026-08-08", "quantidade": "12", "valor": "0.1", "status": "Não pago", "comprador": "João Paulo", "observacao": ""}, {"id": "ep6a5hmy", "data": "2026-08-08", "quantidade": "5", "valor": "0.1", "status": "Não pago", "comprador": "Tião", "observacao": ""}, {"id": "mo7u7w4l", "data": "2026-08-16", "quantidade": "28", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "cvtq7yf1", "data": "2026-08-16", "quantidade": "4", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "3A"}, {"id": "blzajpii", "data": "2026-08-15", "quantidade": "5", "valor": "0.1", "status": "Não pago", "comprador": "Tião", "observacao": ""}, {"id": "qs0ad2k5", "data": "2026-08-15", "quantidade": "12", "valor": "0.1", "status": "Não pago", "comprador": "João Paulo", "observacao": ""}, {"id": "l7vry4nt", "data": "2026-08-18", "quantidade": "21", "valor": "0.1", "status": "Não pago", "comprador": "João Paulo", "observacao": ""}, {"id": "hz72h1nc", "data": "2026-08-18", "quantidade": "23", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "45cky76s", "data": "2026-08-18", "quantidade": "8", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "3A"}, {"id": "n12q4273", "data": "2026-08-19", "quantidade": "20", "valor": "0.1", "status": "Não pago", "comprador": "Tião", "observacao": ""}, {"id": "cdabqmqf", "data": "2026-08-19", "quantidade": "8", "valor": "0.1", "status": "Não pago", "comprador": "João Paulo", "observacao": ""}, {"id": "nozq8s40", "data": "2026-08-20", "quantidade": "33", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "g72s6r5j", "data": "2026-08-20", "quantidade": "7", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "3A"}, {"id": "88vh1aci", "data": "2026-08-22", "quantidade": "12", "valor": "0.1", "status": "Não pago", "comprador": "João Paulo", "observacao": ""}, {"id": "qcvv6a0v", "data": "2026-08-23", "quantidade": "84", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": ""}, {"id": "hx6xigah", "data": "2026-08-13", "quantidade": "7", "valor": "15", "status": "Pago", "comprador": "Kate", "observacao": "3A"}, {"id": "6zcneimo", "data": "2026-08-25", "quantidade": "10", "valor": "0.1", "status": "Não pago", "comprador": "Joel", "observacao": "4A"}, {"id": "q5300z31", "data": "2026-08-25", "quantidade": "41", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "mwf73zit", "data": "2026-08-25", "quantidade": "28", "valor": "0.1", "status": "Não pago", "comprador": "João Paulo", "observacao": ""}], "despesas": [{"id": "6z3xxabt", "data": "2026-08-17", "descricao": "Despesas total", "valor": "4000"}]}, {"id": "s44o7huc", "nome": "Abobrinha Bruno", "periodo": "2026", "vendas": [{"id": "ll2qayo1", "data": "2026-08-03", "quantidade": "1", "valor": "40", "status": "Pago", "comprador": "João Paulo", "observacao": ""}, {"id": "sqbo35xg", "data": "2026-08-07", "quantidade": "12", "valor": "0.1", "status": "Não pago", "comprador": "Márcio", "observacao": ""}, {"id": "kenlp0wf", "data": "2026-08-08", "quantidade": "14", "valor": "0.1", "status": "Não pago", "comprador": "João Paulo", "observacao": ""}, {"id": "arbbtl89", "data": "2026-08-10", "quantidade": "28", "valor": "0.1", "status": "Não pago", "comprador": "Márcio", "observacao": ""}, {"id": "5ndexgra", "data": "2026-08-13", "quantidade": "4", "valor": "24", "status": "Pago", "comprador": "Kate", "observacao": "4A"}, {"id": "5s1lisn3", "data": "2026-08-12", "quantidade": "6", "valor": "0.1", "status": "Não pago", "comprador": "João Paulo", "observacao": ""}, {"id": "6b89zqup", "data": "2026-08-13", "quantidade": "4", "valor": "15", "status": "Pago", "comprador": "Kate", "observacao": "3A"}, {"id": "3hwt7in1", "data": "2026-08-13", "quantidade": "1", "valor": "5", "status": "Pago", "comprador": "Kate", "observacao": "1A"}, {"id": "rodqtz5n", "data": "2026-08-15", "quantidade": "10", "valor": "0.1", "status": "Não pago", "comprador": "Tião", "observacao": ""}, {"id": "upgk9qtt", "data": "2026-08-16", "quantidade": "8", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "2jtqoeqy", "data": "2026-08-16", "quantidade": "3", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "3A"}, {"id": "e1vo4uvg", "data": "2026-08-18", "quantidade": "17", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "j2x4vkxd", "data": "2026-08-18", "quantidade": "5", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "3A"}, {"id": "pslhak6n", "data": "2026-08-20", "quantidade": "29", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "otumno65", "data": "2026-08-20", "quantidade": "2", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "3A"}, {"id": "kp2fzuo9", "data": "2026-08-23", "quantidade": "59", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": ""}, {"id": "ke4oj5l1", "data": "2026-08-25", "quantidade": "10", "valor": "0.1", "status": "Não pago", "comprador": "Leonidas", "observacao": ""}, {"id": "s73e8o81", "data": "2026-08-25", "quantidade": "44", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "ol2m2tmv", "data": "2026-08-25", "quantidade": "1", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "3A"}], "despesas": []}, {"id": "1an7wdc0", "nome": "Abobrinha Wellington", "periodo": "2026", "vendas": [{"id": "z1rehh6i", "data": "2026-08-10", "quantidade": "5", "valor": "0.1", "status": "Não pago", "comprador": "Márcio", "observacao": ""}, {"id": "4g7c8rqz", "data": "2026-08-13", "quantidade": "6", "valor": "24", "status": "Pago", "comprador": "Kate", "observacao": ""}, {"id": "egggsznj", "data": "2026-08-13", "quantidade": "1", "valor": "15", "status": "Pago", "comprador": "Kate", "observacao": "3A"}, {"id": "2crabiz8", "data": "2026-08-16", "quantidade": "7", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "r6ef54ub", "data": "2026-08-18", "quantidade": "10", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "sxfsggob", "data": "2026-08-20", "quantidade": "4", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}, {"id": "slvac51o", "data": "2026-08-15", "quantidade": "3", "valor": "0.1", "status": "Não pago", "comprador": "Tião", "observacao": ""}, {"id": "ncyhutcu", "data": "2026-08-23", "quantidade": "23", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": ""}, {"id": "n5ohjdp8", "data": "2026-08-25", "quantidade": "7", "valor": "0.1", "status": "Não pago", "comprador": "Kate", "observacao": "4A"}], "despesas": []}, {"id": "sicrrwro", "nome": "Pepino Wellington", "periodo": "Julho 2026", "vendas": [{"id": "jz098yao", "data": "2026-07-01", "quantidade": "1", "valor": "0.1", "status": "Não pago", "comprador": "Leônidas", "observacao": ""}, {"id": "s8j4fim5", "data": "2026-07-13", "quantidade": "30", "valor": "55", "status": "Pago", "comprador": "João Paulo", "observacao": ""}, {"id": "g1e1s640", "data": "2026-07-13", "quantidade": "5", "valor": "0.1", "status": "Não pago", "comprador": "Leônidas", "observacao": ""}, {"id": "bo0m4ea5", "data": "2026-07-20", "quantidade": "5", "valor": "0.1", "status": "Não pago", "comprador": "Leonidas", "observacao": ""}, {"id": "az19vt94", "data": "2026-07-27", "quantidade": "10", "valor": "0.1", "status": "Não pago", "comprador": "Leonidas", "observacao": ""}, {"id": "3c5qefhr", "data": "2026-08-03", "quantidade": "3", "valor": "0.1", "status": "Não pago", "comprador": "Leonidas", "observacao": ""}, {"id": "jsarxrgo", "data": "2026-08-03", "quantidade": "3", "valor": "0.1", "status": "Não pago", "comprador": "Leonidas", "observacao": ""}, {"id": "td9yx1l4", "data": "2026-07-20", "quantidade": "10", "valor": "55", "status": "Pago", "comprador": "João Paulo", "observacao": ""}, {"id": "0sypaqtd", "data": "2026-07-27", "quantidade": "21", "valor": "60", "status": "Pago", "comprador": "João Paulo", "observacao": ""}, {"id": "vpw8ikhh", "data": "2026-08-03", "quantidade": "19", "valor": "70", "status": "Pago", "comprador": "João Paulo", "observacao": ""}, {"id": "dmw3bkgn", "data": "2026-08-18", "quantidade": "9", "valor": "0.1", "status": "Não pago", "comprador": "João Paulo", "observacao": ""}, {"id": "92rfx2yg", "data": "2026-08-25", "quantidade": "8", "valor": "0.1", "status": "Não pago", "comprador": "João Paulo", "observacao": "Tudo misturado"}], "despesas": [{"id": "mgb2jhct", "data": "2026-07-07", "descricao": "Despesas geral", "valor": "4000"}]}];
+
+const STORAGE_KEY = 'caderno-lavoura-dados-v1';
+
+function carregarDados(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){
+    try{ return JSON.parse(raw); }catch(e){}
+  }
+  salvarDados(DADOS_INICIAIS);
+  return JSON.parse(JSON.stringify(DADOS_INICIAIS));
+}
+function salvarDados(d){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+}
+let dados = carregarDados();
+
+/* ================= ESTADO ================= */
+let estado = {
+  tela: 'home',        // home | lavoura
+  lavouraId: null,
+  tab: 'vendas',        // vendas | resumo
+  filtroInicio: '',
+  filtroFim: '',
+  filtroComprador: '',
+  filtroStatus: ''       // '' | 'Pago' | 'Não pago'
+};
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function fmtMoeda(v){
+  return 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtData(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function getLavoura(id){ return dados.find(l=>l.id===id); }
+
+function totalVenda(v){ return Number(v.quantidade||0) * Number(v.valor||0); }
+
+function resumoLavoura(lav){
+  let pago=0, aberto=0, caixasPagas=0, caixasAbertas=0;
+  lav.vendas.forEach(v=>{
+    const t = totalVenda(v);
+    const q = Number(v.quantidade||0);
+    if(v.status==='Pago'){ pago += t; caixasPagas += q; }
+    else { aberto += t; caixasAbertas += q; }
+  });
+  const despesas = lav.despesas.reduce((s,d)=>s+Number(d.valor||0),0);
+  const caixas = caixasPagas + caixasAbertas;
+  const mediaCaixa = caixas>0 ? (pago+aberto)/caixas : 0;
+  return { pago, aberto, despesas, saldo: pago - despesas, caixas, caixasPagas, caixasAbertas, mediaCaixa };
+}
+function fmtCaixas(n){
+  return Number.isInteger(n) ? String(n) : n.toLocaleString('pt-BR',{maximumFractionDigits:1});
+}
+
+/* ================= RENDER ================= */
+function render(){
+  const app = document.getElementById('app');
+  if(estado.tela === 'home'){
+    app.innerHTML = renderHome();
+  } else {
+    app.innerHTML = renderLavoura();
+  }
+  ligarEventos();
+}
+
+function renderHome(){
+  let html = `
+    <div class="topbar">
+      <div class="topbar-texts">
+        <h1>Caderno da Lavoura</h1>
+        <div class="sub">${dados.length} lavoura${dados.length!==1?'s':''} cadastrada${dados.length!==1?'s':''}</div>
+      </div>
+      <button class="icon-btn" id="btn-menu">⋮</button>
+    </div>
+    <main>`;
+  if(dados.length===0){
+    html += `<div class="empty-msg">Nenhuma lavoura ainda.<br>Toque abaixo para criar a primeira.</div>`;
+  }
+  dados.forEach(lav=>{
+    const r = resumoLavoura(lav);
+    html += `
+      <div class="lavoura-card" data-id="${lav.id}">
+        <div>
+          <div class="nome">${lav.nome}</div>
+          <div class="periodo">${lav.periodo||''}</div>
+        </div>
+        <div class="saldo ${r.saldo<0?'neg':''}">
+          <div class="saldo-label">Saldo</div>
+          ${fmtMoeda(r.saldo)}
+        </div>
+      </div>`;
+  });
+  html += `<button class="add-lavoura-btn" id="btn-add-lavoura">+ Nova lavoura</button>`;
+  html += `</main>`;
+  return html;
+}
+
+function renderLavoura(){
+  const lav = getLavoura(estado.lavouraId);
+  if(!lav){ estado.tela='home'; return renderHome(); }
+  const r = resumoLavoura(lav);
+
+  let vendasFiltradas = lav.vendas.slice().sort((a,b)=> b.data.localeCompare(a.data));
+  if(estado.filtroInicio) vendasFiltradas = vendasFiltradas.filter(v=>v.data >= estado.filtroInicio);
+  if(estado.filtroFim) vendasFiltradas = vendasFiltradas.filter(v=>v.data <= estado.filtroFim);
+  if(estado.filtroComprador) vendasFiltradas = vendasFiltradas.filter(v=>v.comprador===estado.filtroComprador);
+  if(estado.filtroStatus) vendasFiltradas = vendasFiltradas.filter(v=>v.status===estado.filtroStatus);
+
+  const compradores = [...new Set(lav.vendas.map(v=>v.comprador).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+
+  let html = `
+    <div class="topbar">
+      <button class="back-btn" id="btn-voltar">←</button>
+      <div class="topbar-texts">
+        <h1>${lav.nome}</h1>
+        <div class="sub">${lav.periodo||''}</div>
+      </div>
+      <button class="icon-btn" id="btn-menu-lav">⋮</button>
+    </div>
+    <main>
+      <div class="tabs">
+        <div class="tab ${estado.tab==='vendas'?'active':''}" data-tab="vendas">Vendas</div>
+        <div class="tab ${estado.tab==='resumo'?'active':''}" data-tab="resumo">Resumo</div>
+      </div>`;
+
+  if(estado.tab==='resumo'){
+    html += `
+      <div class="resumo-grid">
+        <div class="resumo-card"><div class="label">Recebido</div><div class="valor v-pago">${fmtMoeda(r.pago)}</div></div>
+        <div class="resumo-card"><div class="label">A receber</div><div class="valor v-aberto">${fmtMoeda(r.aberto)}</div></div>
+        <div class="resumo-card"><div class="label">Despesas</div><div class="valor">${fmtMoeda(r.despesas)}</div></div>
+        <div class="resumo-card"><div class="label">Vendas</div><div class="valor">${lav.vendas.length}</div></div>
+        <div class="resumo-card"><div class="label">Caixas totais</div><div class="valor">${fmtCaixas(r.caixas)}</div></div>
+        <div class="resumo-card"><div class="label">Caixas recebidas</div><div class="valor v-pago">${fmtCaixas(r.caixasPagas)}</div></div>
+        <div class="resumo-card"><div class="label">Caixas não recebidas</div><div class="valor v-aberto">${fmtCaixas(r.caixasAbertas)}</div></div>
+        <div class="resumo-card"><div class="label">Valor médio por caixa</div><div class="valor">${fmtMoeda(r.mediaCaixa)}</div></div>
+        <div class="resumo-card saldo"><div class="label">Saldo (recebido − despesas)</div><div class="valor">${fmtMoeda(r.saldo)}</div></div>
+      </div>
+      <h3 style="font-size:14px;margin:18px 0 10px;">Despesas lançadas</h3>`;
+    if(lav.despesas.length===0){
+      html += `<div class="empty-msg">Nenhuma despesa lançada.</div>`;
+    }
+    lav.despesas.slice().sort((a,b)=>b.data.localeCompare(a.data)).forEach(d=>{
+      html += `
+        <div class="entry" data-despesa-id="${d.id}">
+          <div class="info">
+            <div class="linha1">${d.descricao||'Despesa'}</div>
+            <div class="linha2">${fmtData(d.data)}</div>
+          </div>
+          <div class="valores"><div class="total">${fmtMoeda(d.valor)}</div></div>
+        </div>`;
+    });
+    html += `
+      <div class="fab">
+        <button class="secondary" id="btn-nova-despesa">+ Despesa</button>
+        <button class="primary" id="btn-whatsapp">Enviar resumo</button>
+      </div>`;
+  } else {
+    html += `
+      <div class="filtro-row">
+        <input type="date" id="filtro-inicio" value="${estado.filtroInicio}">
+        <span style="color:var(--tinta-suave);font-size:12px;">até</span>
+        <input type="date" id="filtro-fim" value="${estado.filtroFim}">
+      </div>
+      <div class="filtro-row">
+        <select id="filtro-comprador" style="flex:1;">
+          <option value="">Todos os compradores</option>
+          ${compradores.map(c=>`<option value="${c}" ${estado.filtroComprador===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="filtro-row" style="justify-content:space-between;">
+        <select id="filtro-status" style="flex:1;">
+          <option value="" ${estado.filtroStatus===''?'selected':''}>Todos os status</option>
+          <option value="Pago" ${estado.filtroStatus==='Pago'?'selected':''}>Só pagas</option>
+          <option value="Não pago" ${estado.filtroStatus==='Não pago'?'selected':''}>Só não pagas</option>
+        </select>
+        ${(estado.filtroInicio||estado.filtroFim||estado.filtroComprador||estado.filtroStatus) ? '<button class="filtro-clear" id="btn-limpar-filtro">limpar filtros</button>' : ''}
+      </div>`;
+    if(vendasFiltradas.length===0){
+      html += `<div class="empty-msg">Nenhuma venda no período.<br>Toque em "+ Venda" para lançar.</div>`;
+    }
+    vendasFiltradas.forEach(v=>{
+      html += `
+        <div class="entry" data-venda-id="${v.id}">
+          <div class="info">
+            <div class="linha1">${v.comprador||'Sem comprador'}${v.observacao ? ' · '+v.observacao : ''}</div>
+            <div class="linha2">${fmtData(v.data)} · ${v.quantidade} un × ${fmtMoeda(v.valor)}</div>
+          </div>
+          <div class="valores">
+            <div class="total">${fmtMoeda(totalVenda(v))}</div>
+            <span class="status-pill ${v.status==='Pago'?'status-pago':'status-nao'}">${v.status}</span>
+          </div>
+        </div>`;
+    });
+    html += `
+      <div class="fab">
+        <button class="secondary" id="btn-whatsapp">Enviar</button>
+        <button class="primary" id="btn-nova-venda">+ Venda</button>
+      </div>`;
+  }
+  html += `</main>`;
+  return html;
+}
+
+/* ================= EVENTOS ================= */
+function ligarEventos(){
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+
+  if(estado.tela==='home'){
+    $$('.lavoura-card').forEach(el=>{
+      el.onclick = ()=>{ estado.tela='lavoura'; estado.lavouraId=el.dataset.id; estado.tab='vendas'; estado.filtroInicio=''; estado.filtroFim=''; render(); };
+    });
+    $('#btn-add-lavoura').onclick = abrirFormNovaLavoura;
+    $('#btn-menu').onclick = abrirMenuGeral;
+    return;
+  }
+
+  $('#btn-voltar').onclick = ()=>{ estado.tela='home'; render(); };
+  $$('.tab').forEach(el=>{
+    el.onclick = ()=>{ estado.tab = el.dataset.tab; render(); };
+  });
+  $('#btn-menu-lav').onclick = abrirMenuLavoura;
+
+  if(estado.tab==='vendas'){
+    $('#btn-nova-venda').onclick = ()=>abrirFormVenda(null);
+    $('#btn-whatsapp').onclick = enviarVendasFiltradasWhatsapp;
+    $$('.entry[data-venda-id]').forEach(el=>{
+      el.onclick = ()=>abrirFormVenda(el.dataset.vendaId);
+    });
+    const fi = $('#filtro-inicio'), ff = $('#filtro-fim');
+    if(fi) fi.onchange = ()=>{ estado.filtroInicio = fi.value; render(); };
+    if(ff) ff.onchange = ()=>{ estado.filtroFim = ff.value; render(); };
+    const fc = $('#filtro-comprador');
+    if(fc) fc.onchange = ()=>{ estado.filtroComprador = fc.value; render(); };
+    const fs = $('#filtro-status');
+    if(fs) fs.onchange = ()=>{ estado.filtroStatus = fs.value; render(); };
+    const lf = $('#btn-limpar-filtro');
+    if(lf) lf.onclick = ()=>{ estado.filtroInicio=''; estado.filtroFim=''; estado.filtroComprador=''; estado.filtroStatus=''; render(); };
+  } else {
+    $('#btn-nova-despesa').onclick = ()=>abrirFormDespesa(null);
+    $('#btn-whatsapp').onclick = enviarResumoWhatsapp;
+    $$('.entry[data-despesa-id]').forEach(el=>{
+      el.onclick = ()=>abrirFormDespesa(el.dataset.despesaId);
+    });
+  }
+}
+
+/* ---- Overlay helper ---- */
+function abrirOverlay(innerHtml){
+  fecharOverlay();
+  const ov = document.createElement('div');
+  ov.className='overlay';
+  ov.id='overlay';
+  ov.innerHTML = `<div class="sheet">${innerHtml}</div>`;
+  ov.addEventListener('click', e=>{ if(e.target===ov) fecharOverlay(); });
+  document.body.appendChild(ov);
+}
+function fecharOverlay(){
+  const ov = document.getElementById('overlay');
+  if(ov) ov.remove();
+}
+
+/* ---- Nova lavoura ---- */
+function abrirFormNovaLavoura(){
+  abrirOverlay(`
+    <h2>Nova lavoura</h2>
+    <div class="field"><label>Nome</label><input id="f-nome" placeholder="Ex: Abobrinha Setembro"></div>
+    <div class="field"><label>Período / safra</label><input id="f-periodo" placeholder="Ex: Set 2026"></div>
+    <div class="sheet-actions">
+      <button class="btn-cancelar" id="f-cancelar">Cancelar</button>
+      <button class="btn-salvar" id="f-salvar">Criar</button>
+    </div>`);
+  document.getElementById('f-cancelar').onclick = fecharOverlay;
+  document.getElementById('f-salvar').onclick = ()=>{
+    const nome = document.getElementById('f-nome').value.trim();
+    if(!nome){ toast('Digite um nome'); return; }
+    const nova = { id: uid(), nome, periodo: document.getElementById('f-periodo').value.trim(), vendas:[], despesas:[] };
+    dados.push(nova);
+    salvarDados(dados);
+    fecharOverlay();
+    estado.tela='lavoura'; estado.lavouraId=nova.id; estado.tab='vendas';
+    render();
+    toast('Lavoura criada');
+  };
+}
+
+/* ---- Form de venda ---- */
+function abrirFormVenda(vendaId){
+  const lav = getLavoura(estado.lavouraId);
+  const v = vendaId ? lav.vendas.find(x=>x.id===vendaId) : null;
+  abrirOverlay(`
+    <h2>${v?'Editar venda':'Nova venda'}</h2>
+    <div class="row2">
+      <div class="field"><label>Data</label><input type="date" id="f-data" value="${v?v.data:new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label>Status</label>
+        <select id="f-status">
+          <option value="Pago" ${v&&v.status==='Pago'?'selected':''}>Pago</option>
+          <option value="Não pago" ${v&&v.status==='Não pago'?'selected':''}>Não pago</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Quantidade</label><input type="number" step="any" id="f-quantidade" value="${v?v.quantidade:''}" placeholder="0"></div>
+      <div class="field"><label>Valor unitário (R$)</label><input type="number" step="any" id="f-valor" value="${v?v.valor:''}" placeholder="0,00"></div>
+    </div>
+    <div class="field"><label>Comprador</label><input id="f-comprador" value="${v?v.comprador||'':''}" placeholder="Nome do comprador"></div>
+    <div class="field"><label>Observação</label><input id="f-observacao" value="${v?v.observacao||'':''}" placeholder="Ex: graúdo, 3A..."></div>
+    <div class="sheet-actions">
+      <button class="btn-cancelar" id="f-cancelar">Cancelar</button>
+      <button class="btn-salvar" id="f-salvar">Salvar</button>
+    </div>
+    ${v?'<button class="btn-excluir" id="f-excluir">Excluir venda</button>':''}
+  `);
+  document.getElementById('f-cancelar').onclick = fecharOverlay;
+  document.getElementById('f-salvar').onclick = ()=>{
+    const dataVal = document.getElementById('f-data').value;
+    const qtd = document.getElementById('f-quantidade').value;
+    const val = document.getElementById('f-valor').value;
+    if(!dataVal || qtd==='' || val===''){ toast('Preencha data, quantidade e valor'); return; }
+    const obj = {
+      id: v?v.id:uid(),
+      data: dataVal,
+      quantidade: qtd,
+      valor: val,
+      status: document.getElementById('f-status').value,
+      comprador: document.getElementById('f-comprador').value.trim(),
+      observacao: document.getElementById('f-observacao').value.trim()
+    };
+    if(v){
+      const idx = lav.vendas.findIndex(x=>x.id===v.id);
+      lav.vendas[idx] = obj;
+    } else {
+      lav.vendas.push(obj);
+    }
+    salvarDados(dados);
+    fecharOverlay();
+    render();
+    toast('Venda salva');
+  };
+  const btnEx = document.getElementById('f-excluir');
+  if(btnEx) btnEx.onclick = ()=>{
+    if(confirm('Excluir esta venda?')){
+      lav.vendas = lav.vendas.filter(x=>x.id!==v.id);
+      salvarDados(dados);
+      fecharOverlay();
+      render();
+      toast('Venda excluída');
+    }
+  };
+}
+
+/* ---- Form de despesa ---- */
+function abrirFormDespesa(despesaId){
+  const lav = getLavoura(estado.lavouraId);
+  const d = despesaId ? lav.despesas.find(x=>x.id===despesaId) : null;
+  abrirOverlay(`
+    <h2>${d?'Editar despesa':'Nova despesa'}</h2>
+    <div class="field"><label>Data</label><input type="date" id="f-data" value="${d?d.data:new Date().toISOString().slice(0,10)}"></div>
+    <div class="field"><label>Descrição</label><input id="f-descricao" value="${d?d.descricao||'':''}" placeholder="Ex: Adubo, sementes..."></div>
+    <div class="field"><label>Valor (R$)</label><input type="number" step="any" id="f-valor" value="${d?d.valor:''}" placeholder="0,00"></div>
+    <div class="sheet-actions">
+      <button class="btn-cancelar" id="f-cancelar">Cancelar</button>
+      <button class="btn-salvar" id="f-salvar">Salvar</button>
+    </div>
+    ${d?'<button class="btn-excluir" id="f-excluir">Excluir despesa</button>':''}
+  `);
+  document.getElementById('f-cancelar').onclick = fecharOverlay;
+  document.getElementById('f-salvar').onclick = ()=>{
+    const dataVal = document.getElementById('f-data').value;
+    const val = document.getElementById('f-valor').value;
+    if(!dataVal || val===''){ toast('Preencha data e valor'); return; }
+    const obj = { id: d?d.id:uid(), data:dataVal, descricao:document.getElementById('f-descricao').value.trim(), valor: val };
+    if(d){
+      const idx = lav.despesas.findIndex(x=>x.id===d.id);
+      lav.despesas[idx] = obj;
+    } else {
+      lav.despesas.push(obj);
+    }
+    salvarDados(dados);
+    fecharOverlay();
+    render();
+    toast('Despesa salva');
+  };
+  const btnEx = document.getElementById('f-excluir');
+  if(btnEx) btnEx.onclick = ()=>{
+    if(confirm('Excluir esta despesa?')){
+      lav.despesas = lav.despesas.filter(x=>x.id!==d.id);
+      salvarDados(dados);
+      fecharOverlay();
+      render();
+      toast('Despesa excluída');
+    }
+  };
+}
+
+/* ---- Menu geral (home) ---- */
+function abrirMenuGeral(){
+  abrirOverlay(`
+    <h2>Menu</h2>
+    <div class="menu-item" id="m-exportar">📤 Exportar backup (JSON)</div>
+    <div class="menu-item" id="m-importar">📥 Restaurar backup (JSON)</div>
+    <input type="file" id="input-importar" accept="application/json">
+  `);
+  document.getElementById('m-exportar').onclick = exportarBackup;
+  document.getElementById('m-importar').onclick = ()=>document.getElementById('input-importar').click();
+  document.getElementById('input-importar').onchange = importarBackup;
+}
+
+/* ---- Menu da lavoura ---- */
+function abrirMenuLavoura(){
+  const lav = getLavoura(estado.lavouraId);
+  abrirOverlay(`
+    <h2>${lav.nome}</h2>
+    <div class="menu-item" id="m-editar-lav">✏️ Editar nome / período</div>
+    <div class="menu-item" id="m-excluir-lav" style="color:var(--tomate);">🗑️ Excluir lavoura</div>
+  `);
+  document.getElementById('m-editar-lav').onclick = ()=>{
+    fecharOverlay();
+    abrirOverlay(`
+      <h2>Editar lavoura</h2>
+      <div class="field"><label>Nome</label><input id="f-nome" value="${lav.nome}"></div>
+      <div class="field"><label>Período / safra</label><input id="f-periodo" value="${lav.periodo||''}"></div>
+      <div class="sheet-actions">
+        <button class="btn-cancelar" id="f-cancelar">Cancelar</button>
+        <button class="btn-salvar" id="f-salvar">Salvar</button>
+      </div>`);
+    document.getElementById('f-cancelar').onclick = fecharOverlay;
+    document.getElementById('f-salvar').onclick = ()=>{
+      lav.nome = document.getElementById('f-nome').value.trim() || lav.nome;
+      lav.periodo = document.getElementById('f-periodo').value.trim();
+      salvarDados(dados);
+      fecharOverlay();
+      render();
+      toast('Lavoura atualizada');
+    };
+  };
+  document.getElementById('m-excluir-lav').onclick = ()=>{
+    if(confirm(`Excluir "${lav.nome}" e todas as vendas dela? Isso não pode ser desfeito.`)){
+      dados = dados.filter(l=>l.id!==lav.id);
+      salvarDados(dados);
+      fecharOverlay();
+      estado.tela='home';
+      render();
+      toast('Lavoura excluída');
+    }
+  };
+}
+
+/* ---- Exportar / importar backup ---- */
+function exportarBackup(){
+  fecharOverlay();
+  const blob = new Blob([JSON.stringify(dados,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const hoje = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `caderno-da-lavoura-backup-${hoje}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Backup exportado');
+}
+function importarBackup(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const novo = JSON.parse(e.target.result);
+      if(!Array.isArray(novo)) throw new Error('formato inválido');
+      if(confirm('Isso vai substituir todos os dados atuais pelos do backup. Continuar?')){
+        dados = novo;
+        salvarDados(dados);
+        fecharOverlay();
+        estado.tela='home';
+        render();
+        toast('Backup restaurado');
+      }
+    }catch(err){
+      toast('Arquivo inválido');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ---- WhatsApp ---- */
+function listaVendasFiltradas(lav){
+  let lista = lav.vendas.slice().sort((a,b)=> b.data.localeCompare(a.data));
+  if(estado.filtroInicio) lista = lista.filter(v=>v.data >= estado.filtroInicio);
+  if(estado.filtroFim) lista = lista.filter(v=>v.data <= estado.filtroFim);
+  if(estado.filtroComprador) lista = lista.filter(v=>v.comprador===estado.filtroComprador);
+  if(estado.filtroStatus) lista = lista.filter(v=>v.status===estado.filtroStatus);
+  return lista;
+}
+function enviarVendasFiltradasWhatsapp(){
+  const lav = getLavoura(estado.lavouraId);
+  const lista = listaVendasFiltradas(lav).slice().sort((a,b)=>a.data.localeCompare(b.data));
+  if(lista.length===0){ toast('Nenhuma venda para enviar com esse filtro'); return; }
+  let titulo = lav.nome;
+  if(estado.filtroComprador) titulo += ` - ${estado.filtroComprador}`;
+  if(estado.filtroStatus==='Pago') titulo += ` (pagas)`;
+  if(estado.filtroStatus==='Não pago') titulo += ` (não pagas)`;
+  let msg = `*${titulo}*\n\n`;
+  let totalCaixas = 0, totalValor = 0;
+  lista.forEach(v=>{
+    totalCaixas += Number(v.quantidade||0);
+    totalValor += totalVenda(v);
+    msg += `${fmtData(v.data)} - ${v.comprador||'?'}${v.observacao?' ('+v.observacao+')':''} - ${v.quantidade} un - ${fmtMoeda(totalVenda(v))} - ${v.status}\n`;
+  });
+  msg += `\n*Total: ${fmtCaixas(totalCaixas)} caixas - ${fmtMoeda(totalValor)}*`;
+  const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+function enviarResumoWhatsapp(){
+  const lav = getLavoura(estado.lavouraId);
+  const r = resumoLavoura(lav);
+  let msg = `*${lav.nome}* (${lav.periodo||''})\n\n`;
+  msg += `Caixas vendidas: ${fmtCaixas(r.caixas)}\n`;
+  msg += `Recebido: ${fmtMoeda(r.pago)}\n`;
+  msg += `A receber: ${fmtMoeda(r.aberto)}\n`;
+  msg += `Despesas: ${fmtMoeda(r.despesas)}\n`;
+  msg += `Saldo: ${fmtMoeda(r.saldo)}\n\n`;
+  const abertas = lav.vendas.filter(v=>v.status!=='Pago').sort((a,b)=>a.data.localeCompare(b.data));
+  if(abertas.length){
+    msg += `*Vendas em aberto:*\n`;
+    abertas.forEach(v=>{
+      msg += `${fmtData(v.data)} - ${v.comprador||'?'} - ${fmtMoeda(totalVenda(v))}\n`;
+    });
+  }
+  const url = 'https://wa.me/?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+/* ================= PWA: registrar service worker ================= */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* ok se falhar em file:// */ });
+  });
+}
+
+render();
+</script>
+</body>
+</html>
